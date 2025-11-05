@@ -35,14 +35,25 @@ def km(a,b,c,d):
     h=math.sin(dlat/2)**2 + math.cos(p1)*math.cos(p2)*math.sin(dlon/2)**2
     return 2*R*math.asin(math.sqrt(h))
 
-def norm_price(s:str)->float|None:
-    if not s: return None
-    s = s.replace(",", "").replace(" ", "")
-    m = re.search(r'([0-9.]+)(m|k)?', s.lower())
-    if not m: return None
+def norm_price(s: str) -> float | None:
+    """Parse price strings like 1.2m, 850k, 1,450,000, 4750000. Returns AUD float or None."""
+    if not s:
+        return None
+    s = s.strip().lower()
+
+    s = re.sub(r'[^0-9.mk]', '', s)
+    # must contain at least one digit
+    if not re.search(r'\d', s):
+        return None
+
+    m = re.search(r'([0-9]+(?:\.[0-9]+)?)([mk])?$', s)
+    if not m:
+        return None
+
     x = float(m.group(1))
-    mul = {"m":1_000_000,"k":1_000}.get(m.group(2) or "",1)
-    return x*mul
+    mul = {'m': 1_000_000, 'k': 1_000}.get(m.group(2) or '', 1)
+    return x * mul
+
 
 def search_serpapi(q, gl="au"):
     key = os.environ.get("SERPAPI_API_KEY")
@@ -63,7 +74,16 @@ def normalize_hit(hit, source)->Dict[str,Any]:
     snippet = hit.get("snippet","")
     price = None
     # crude price parse from snippet/title
-    m = re.search(r"AUD?\$?\s?([0-9,\.]+[mk]?)", snippet+ " " + title, re.I)
+    m = re.search(
+    r"(?i)(?:au)?d?\$?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)([mk])?",
+    (snippet or '') + ' ' + (title or '')
+)
+price = None
+if m:
+    num = (m.group(1) or '')
+    suf = (m.group(2) or '')
+    price = norm_price(f"{num}{suf}")
+
     if m:
         price = norm_price(m.group(1))
     return {

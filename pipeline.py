@@ -48,8 +48,9 @@ def search_serpapi(q, gl="au"):
     key = os.environ.get("SERPAPI_API_KEY")
     if not key:
         raise RuntimeError("SERPAPI_API_KEY not set")
-    params = {"engine":"google","q":q,"gl":gl,"num":10}
-    res = GoogleSearch(params, api_key=key).get_dict()
+    params = {"engine":"google","q":q,"gl":gl,"hl":"en","num":10,"api_key":key}
+    search = GoogleSearch(params)
+    res = search.get_dict() or {}
     return res.get("organic_results", [])
 
 def parse_sites():

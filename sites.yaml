@@ -1,0 +1,72 @@
+
+# Search definitions for SerpAPI (Google) and optional Apify scrapers
+- name: Seek Business
+  category: Mixed
+  region: AU
+  ownership: Unknown
+  queries:
+    - 'site:seekbusiness.com.au "for sale" pub Queensland'
+    - 'site:seekbusiness.com.au "for sale" caravan park Queensland'
+    - 'site:seekbusiness.com.au "for sale" car wash Queensland'
+- name: BusinessesForSale
+  category: Mixed
+  region: AU
+  ownership: Unknown
+  queries:
+    - 'site:businessesforsale.com "for sale" pub Queensland'
+    - 'site:businessesforsale.com "for sale" caravan park Queensland'
+    - 'site:businessesforsale.com "for sale" car wash Queensland'
+- name: AnyBusiness
+  category: Mixed
+  region: AU
+  ownership: Unknown
+  queries:
+    - 'site:anybusiness.com.au "for sale" pub Queensland'
+    - 'site:anybusiness.com.au "for sale" caravan park Queensland'
+    - 'site:anybusiness.com.au "for sale" car wash Queensland'
+- name: CommercialRealEstate
+  category: Hotels/Pubs
+  region: AU
+  ownership: Unknown
+  queries:
+    - 'site:commercialrealestate.com.au "hotel" "for sale" Queensland'
+    - 'site:commercialrealestate.com.au "caravan park" "for sale" Queensland'
+- name: CRE Brokers
+  category: Caravan Park/Campground
+  region: AU
+  ownership: Mixed
+  queries:
+    - 'site:crebrokers.com "caravan park" for sale Queensland'
+    - 'site:crebrokers.com "hotel" for sale Queensland'
+- name: ResortBrokers
+  category: Hotels/Motels/Caravan Parks
+  region: AU
+  ownership: Mixed
+  queries:
+    - 'site:resortbrokers.com.au "for sale" park Queensland'
+    - 'site:resortbrokers.com.au "for sale" hotel Queensland'
+- name: HTL Property
+  category: Hotel/Pub
+  region: AU
+  ownership: Mixed
+  queries:
+    - 'site:htlproperty.com.au "for sale" hotel Queensland'
+- name: CBRE Hotels
+  category: Hotel/Pub
+  region: AU
+  ownership: Mixed
+  queries:
+    - 'site:cbrehotels.com "for sale" hotel Queensland'
+- name: JLL Hotels
+  category: Hotel/Pub
+  region: AU
+  ownership: Mixed
+  queries:
+    - 'site:jll.com.au "hotel" "for sale" Queensland'
+- name: Gumtree
+  category: Mixed
+  region: AU
+  ownership: Mixed
+  queries:
+    - 'site:gumtree.com.au "business for sale" Queensland pub'
+    - 'site:gumtree.com.au "business for sale" Queensland car wash'

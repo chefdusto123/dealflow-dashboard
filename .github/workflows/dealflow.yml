@@ -1,0 +1,46 @@
+name: Dealflow Daily
+
+on:
+  schedule:
+    - cron: "0 20 * * *"  # 06:00 AEST (UTC+10) ~= 20:00 UTC previous day
+  workflow_dispatch: {}
+
+jobs:
+  run:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pages: write
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Install deps
+        run: pip install serpapi python-dateutil pydantic pyyaml pandas
+      - name: Run pipeline
+        env:
+          SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
+        run: python pipeline.py
+      - name: Commit data
+        run: |
+          git config user.name "dealflow-bot"
+          git config user.email "bot@example.com"
+          git add -A
+          git commit -m "update: data $(date -Iseconds)" || echo "No changes"
+          git push
+      - name: Publish dashboard to gh-pages
+        run: |
+          rm -rf /tmp/gh-pages
+          mkdir -p /tmp/gh-pages
+          cp -r dashboard.html data /tmp/gh-pages/
+          cd /tmp/gh-pages
+          git init
+          git checkout -b gh-pages
+          git config user.name "dealflow-bot"
+          git config user.email "bot@example.com"
+          git add -A
+          git commit -m "publish dashboard"
+          git remote add origin ${{ github.server_url }}/${{ github.repository }}.git
+          git push -f origin gh-pages

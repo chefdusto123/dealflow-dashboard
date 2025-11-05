@@ -1,0 +1,133 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Dealflow Dashboard</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; margin: 20px; background: #0b1020; color: #e8eefc; }
+    .wrap { max-width: 1200px; margin: 0 auto; }
+    h1 { margin-bottom: 0.25rem; }
+    .sub { opacity: 0.8; margin-top: 0; }
+    .controls { display: grid; grid-template-columns: repeat(6, 1fr); gap: 10px; margin: 16px 0 12px 0;}
+    input, select { padding: 8px; border-radius: 10px; border: 1px solid #394768; background: #121a33; color: #e8eefc; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+    th, td { padding: 10px; border-bottom: 1px solid #2a3553; text-align: left; }
+    th { position: sticky; top: 0; background: #11172d; }
+    .pill { padding: 3px 8px; border-radius: 999px; background: #1f2b4a; }
+    .score { font-weight: 700; }
+    .badge { background: #1b8a4b; color: white; padding: 2px 6px; border-radius: 6px; font-size: 12px;}
+    .grid { display: grid; grid-template-columns: repeat(3,1fr); gap: 10px; margin-top: 16px;}
+    .card { background: #0f152b; border: 1px solid #273457; border-radius: 14px; padding: 14px;}
+    a { color: #7db7ff; text-decoration: none;}
+    a:hover { text-decoration: underline;}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Dealflow Dashboard</h1>
+  <p class="sub">Automatic daily pipeline for small-business acquisitions. <span id="stamp"></span></p>
+  <div class="controls">
+    <input id="q" placeholder="Search title/notes">
+    <select id="cat"><option value="">All categories</option></select>
+    <select id="own"><option value="">All ownership</option><option>Freehold</option><option>Leasehold</option></select>
+    <input id="minScore" type="number" step="0.01" placeholder="Min score (0-1)">
+    <input id="maxPrice" type="number" placeholder="Max price (AUD)">
+    <select id="sort">
+      <option value="score">Sort by: Score</option>
+      <option value="date_listed">Sort by: Newest</option>
+      <option value="asking_price_aud">Sort by: Price</option>
+      <option value="ebitda_aud">Sort by: EBITDA</option>
+    </select>
+  </div>
+
+  <div class="grid">
+    <div class="card"><div>Total deals</div><div id="kpi1" class="score" style="font-size:28px;"></div></div>
+    <div class="card"><div>Avg multiple (Price/EBITDA)</div><div id="kpi2" class="score" style="font-size:28px;"></div></div>
+    <div class="card"><div>Freehold share</div><div id="kpi3" class="score" style="font-size:28px;"></div></div>
+  </div>
+
+  <table id="tbl">
+    <thead>
+      <tr>
+        <th>Score</th><th>Title</th><th>Category</th><th>Ownership</th><th>Ask (AUD)</th><th>EBITDA</th><th>Location</th><th>Source</th><th>Listed</th>
+      </tr>
+    </thead>
+    <tbody></tbody>
+  </table>
+  <p style="opacity:.7;margin-top:10px;">Scoring: margin (25%), price/EBITDA (25%), recency (15%), freehold (15%), category (10%), proximity SEQ (10%). Edit <code>scoring_config.json</code> to adjust.</p>
+</div>
+<script>
+async function loadData(){
+  const res = await fetch('data/deals.json?_=' + Date.now());
+  const data = await res.json();
+  return data;
+}
+function fmt(n){ if(n==null) return ""; return n.toLocaleString('en-AU'); }
+function pct(n){ return (n*100).toFixed(0) + "%"; }
+function cmp(a,b,k){ if(k==="date_listed") return (b[k]||"").localeCompare(a[k]||""); return (b[k]||0)-(a[k]||0); }
+
+function render(data){
+  const q = document.getElementById('q').value.toLowerCase();
+  const cat = document.getElementById('cat').value;
+  const own = document.getElementById('own').value;
+  const minScore = parseFloat(document.getElementById('minScore').value || "0");
+  const maxPrice = parseFloat(document.getElementById('maxPrice').value || "1e20");
+  const sort = document.getElementById('sort').value;
+
+  let rows = data.filter(d => 
+    (!q || (d.title||"").toLowerCase().includes(q) || (d.notes||"").toLowerCase().includes(q)) &&
+    (!cat || d.category===cat) &&
+    (!own || d.ownership===own) &&
+    (d.score>=minScore) &&
+    ((d.asking_price_aud||0)<=maxPrice)
+  ).sort((a,b)=>cmp(a,b,sort));
+
+  // KPIs
+  document.getElementById('kpi1').innerText = rows.length;
+  const multiples = rows.map(r => r.asking_price_aud && r.ebitda_aud ? r.asking_price_aud/r.ebitda_aud : null).filter(x=>x);
+  document.getElementById('kpi2').innerText = multiples.length ? (multiples.reduce((a,b)=>a+b,0)/multiples.length).toFixed(2) + "x" : "—";
+  const free = rows.filter(r => (r.ownership||"").toLowerCase()==="freehold").length;
+  document.getElementById('kpi3').innerText = rows.length ? ((free/rows.length)*100).toFixed(0)+"%" : "—";
+
+  // table
+  const tb = document.querySelector('#tbl tbody');
+  tb.innerHTML = "";
+  rows.forEach(r => {
+    const tr = document.createElement('tr');
+    tr.innerHTML = `
+      <td class="score">${r.score.toFixed(3)}</td>
+      <td><a href="${r.url}" target="_blank">${r.title}</a><div style="opacity:.7;font-size:12px">${r.notes||""}</div></td>
+      <td><span class="pill">${r.category||""}</span></td>
+      <td>${r.ownership||""}</td>
+      <td>${fmt(r.asking_price_aud)}</td>
+      <td>${r.ebitda_aud? fmt(r.ebitda_aud): ""}</td>
+      <td>${r.location||""}</td>
+      <td>${r.source||""}</td>
+      <td>${r.date_listed||""}</td>
+    `;
+    tb.appendChild(tr);
+  });
+
+  // category options
+  const cats = [...new Set(data.map(d => d.category).filter(Boolean))].sort();
+  const catSel = document.getElementById('cat');
+  if(catSel.options.length===1){
+    cats.forEach(c => {
+      const o = document.createElement('option'); o.value=c; o.textContent=c; catSel.appendChild(o);
+    });
+  }
+}
+
+(async () => {
+  const data = await loadData();
+  render(data);
+  document.getElementById('stamp').innerText = "Last updated " + new Date().toLocaleString();
+  Array.from(document.querySelectorAll('.controls input, .controls select')).forEach(el => {
+    el.addEventListener('input', ()=>render(data));
+    el.addEventListener('change', ()=>render(data));
+  });
+})();
+</script>
+</body>
+</html>

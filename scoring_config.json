@@ -1,0 +1,19 @@
+{
+  "weights": {
+    "ebitda_margin": 0.25,
+    "price_to_ebitda": 0.25,
+    "recency": 0.15,
+    "ownership_freehold": 0.15,
+    "category_match": 0.1,
+    "proximity_se_qld": 0.1
+  },
+  "target_categories": [
+    "Hotel/Pub",
+    "Caravan Park/Campground",
+    "Car Wash",
+    "Retail/Liquor"
+  ],
+  "hq_lat": -27.47,
+  "hq_lon": 153.03,
+  "max_distance_km_for_full_points": 200
+}

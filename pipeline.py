@@ -68,42 +68,41 @@ def parse_sites():
     with open(SITES) as f:
         return yaml.safe_load(f)
 
-def normalize_hit(hit, source)->Dict[str,Any]:
+def normalize_hit(hit, source) -> Dict[str, Any]:
     link = hit.get("link")
-    title= hit.get("title","").strip()
-    snippet = hit.get("snippet","")
+    title = hit.get("title", "").strip()
+    snippet = hit.get("snippet", "")
     price = None
-    # crude price parse from snippet/title
-    m = re.search(
-    r"(?i)(?:au)?d?\$?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)([mk])?",
-    (snippet or '') + ' ' + (title or '')
-)
-price = None
-if m:
-    num = (m.group(1) or '')
-    suf = (m.group(2) or '')
-    price = norm_price(f"{num}{suf}")
 
+    # Try to find a price pattern like $850k, AUD 1.2m, $1,200,000 etc.
+    m = re.search(
+        r"(?i)(?:au)?d?\$?\s*([0-9]{1,3}(?:,[0-9]{3})*(?:\.[0-9]+)?|[0-9]+(?:\.[0-9]+)?)([mk])?",
+        (snippet or "") + " " + (title or "")
+    )
     if m:
-        price = norm_price(m.group(1))
+        num = (m.group(1) or "")
+        suf = (m.group(2) or "")
+        price = norm_price(f"{num}{suf}")
+
     return {
-        "id": f"{source['name']}-{abs(hash(link))%10_000_000}",
+        "id": f"{source['name']}-{abs(hash(link)) % 10_000_000}",
         "title": title,
-        "category": source.get("category","Unknown"),
+        "category": source.get("category", "Unknown"),
         "source": source["name"],
         "url": link,
         "asking_price_aud": price,
         "revenue_aud": None,
         "ebitda_aud": None,
-        "location": source.get("region","AU"),
+        "location": source.get("region", "AU"),
         "lat": None,
         "lon": None,
-        "ownership": source.get("ownership","Unknown"),
+        "ownership": source.get("ownership", "Unknown"),
         "days_on_market": 0,
         "date_listed": datetime.now(timezone.utc).date().isoformat(),
         "notes": snippet,
         "contact": None
     }
+
 
 def run():
     sites = parse_sites()

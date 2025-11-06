@@ -23,24 +23,20 @@ jobs:
         env:
           SERPAPI_API_KEY: ${{ secrets.SERPAPI_API_KEY }}
         run: python pipeline.py
-      - name: Commit data
+      - name: Prepare site
         run: |
-          git config user.name "dealflow-bot"
-          git config user.email "bot@example.com"
-          git add -A
-          git commit -m "update: data $(date -Iseconds)" || echo "No changes"
-          git push
-      - name: Publish dashboard to gh-pages
-        run: |
-          rm -rf /tmp/gh-pages
-          mkdir -p /tmp/gh-pages
-          cp -r dashboard.html data /tmp/gh-pages/
-          cd /tmp/gh-pages
-          git init
-          git checkout -b gh-pages
-          git config user.name "dealflow-bot"
-          git config user.email "bot@example.com"
-          git add -A
-          git commit -m "publish dashboard"
-          git remote add origin ${{ github.server_url }}/${{ github.repository }}.git
-          git push -f origin gh-pages
+          rm -rf dist
+          mkdir -p dist
+          cp -r dashboard.html data dist/
+
+      - name: Configure Pages
+        uses: actions/configure-pages@v5
+
+      - name: Upload artifact
+        uses: actions/upload-pages-artifact@v3
+        with:
+          path: dist
+
+      - name: Deploy to GitHub Pages
+        uses: actions/deploy-pages@v4
+
